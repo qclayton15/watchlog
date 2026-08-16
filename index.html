@@ -767,6 +767,8 @@ const $ = s=>document.querySelector(s);
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200); }
 function statusClass(s){return {"Watching":"s-watching","Caught up":"s-caught","Plan to watch":"s-plan","Finished":"s-done","Dropped":"s-dropped"}[s]||"s-caught";}
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+// Surface the real Supabase error so save failures are diagnosable, not just "failed".
+function saveErr(e){ console.error("WatchLog save error:",e); return "Save failed — "+((e&&(e.message||e.details||e.hint))||"see console (F12)"); }
 
 function airInfo(anilistId){
   const l = live.get(anilistId);
@@ -1196,7 +1198,7 @@ async function bump(id,delta){
   const a=airInfo(s.anilistId); const before=s.progress||0;
   s.progress=Math.max(0,before+delta); render();
   if(delta>0 && a.airedEps && before<a.airedEps && s.progress>=a.airedEps) confetti(); // caught up!
-  try{ await store.update(id,{progress:s.progress}); }catch(e){ toast("Save failed"); }
+  try{ await store.update(id,{progress:s.progress}); }catch(e){ toast(saveErr(e)); }
 }
 // Update the shared "latest dub episode" (writes to my row; display uses the group max)
 async function setDub(id,delta){
@@ -1204,7 +1206,7 @@ async function setDub(id,delta){
   const cur=(dubLatest(s.anilistId)||{}).ep || 0;
   const val=Math.max(0,cur+delta);
   s.dub_ep=val; render();
-  try{ await store.update(id,{dub_ep:val}); }catch(e){ toast("Couldn't save — make sure the dub_ep column exists"); }
+  try{ await store.update(id,{dub_ep:val}); }catch(e){ toast(saveErr(e)); }
 }
 const detailsCache=new Map();
 function capWord(s){ return s?s.charAt(0)+s.slice(1).toLowerCase():s; }
@@ -1275,13 +1277,13 @@ async function saveEdit(){
   Object.assign(s,patch); render();
   $("#editOverlay").classList.remove("show");
   if(!wasFinished && patch.status==="Finished") confetti(); // finished a show!
-  try{ await store.update(editingId,patch); }catch(e){ toast("Save failed"); }
+  try{ await store.update(editingId,patch); }catch(e){ toast(saveErr(e)); }
 }
 async function removeShow(){
   const id=editingId; const s=shows.find(x=>x.id===id);
   shows=shows.filter(x=>x.id!==id); render();
   $("#editOverlay").classList.remove("show");
-  try{ await store.remove(id); toast("Removed"+(s?" “"+s.title+"”":"")); }catch(e){ toast("Remove failed"); }
+  try{ await store.remove(id); toast("Removed"+(s?" “"+s.title+"”":"")); }catch(e){ toast(saveErr(e)); }
 }
 
 /* ---------------- Ratings ---------------- */
@@ -1291,7 +1293,7 @@ async function setRating(id,val){
   const s=shows.find(x=>x.id===id); if(!s) return;
   s.rating=(s.rating===val)?0:val;   // click the same star again to clear
   render();
-  try{ await store.update(id,{rating:s.rating}); }catch(e){ toast("Rating not saved — run the ratings migration"); }
+  try{ await store.update(id,{rating:s.rating}); }catch(e){ toast(saveErr(e)); }
 }
 
 /* ---------------- Calendar (.ics) ---------------- */
