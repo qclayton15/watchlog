@@ -4,7 +4,7 @@ A shared anime release tracker for you and your friends. See what airs each day,
 
 WatchLog is a single self-contained HTML file. No build step, no framework, no server of your own — it runs entirely in the browser and stores shared data in a free [Supabase](https://supabase.com) database.
 
-> **Live site:** _add your GitHub Pages URL here once deployed, e.g._ `https://yourname.github.io/watchlog/`
+> **Live site:** https://qclayton15.github.io/watchlog/
 
 ---
 
